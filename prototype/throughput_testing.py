@@ -1,3 +1,12 @@
+"""
+Module for stress testing prototype order book.
+
+Author: Willis Erdman
+Created: Aug 21, 2025
+Version: 1.0
+
+"""
+
 from order_book_matching import OrderBookMatching
 
 ob = OrderBookMatching()

@@ -1,3 +1,12 @@
+"""
+Order book with price matching.
+
+Author: Willis Erdman
+Created: Aug 21, 2025
+Version: 1.0
+
+"""
+
 from price_level import PriceLevel
 from order_book_skeleton import OrderBook
 import heapq

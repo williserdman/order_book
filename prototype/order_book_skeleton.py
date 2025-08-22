@@ -1,3 +1,12 @@
+"""
+Skeleton that manages resting order book
+
+Author: Willis Erdman
+Created: Aug 21, 2025
+Version: 1.0
+
+"""
+
 from price_level import PriceLevel
 import heapq
 
