@@ -8,144 +8,125 @@ Version: 1.0
 
 */
 
+// * dereference 
+// . access
+// -> is *.
 
-#include <string>
-#include <map>
+#include "PriceLevel.h"
 #include <iostream>
 
-struct OrderNode {
-    int id;
-    int qty;
-    OrderNode* right = nullptr;
-    OrderNode* left = nullptr;
-};
 
-struct BasicOrder {
-    int id;
-    int qty;
 
-    BasicOrder(int id, int qty) {
-        this->id = id;
-        this->qty = qty;
-    }
-};
+BasicOrder::BasicOrder(int id, int qty) {
+    this->id = id;
+    this->qty = qty;
+}
 
-class PriceLevel {
+PriceLevel::PriceLevel(float price, std::string type) {
+    this->price = price;
+    this->type = type;
+}
 
-private:
-    OrderNode* head = nullptr;
-    OrderNode* tail = nullptr;
-    std::map<int, OrderNode*> dict;
-    float price;
-    std::string type;
+BasicOrder PriceLevel::simple_list() {
+    // todo
+    return BasicOrder(0, 0);
+}
 
-public:
-    PriceLevel(int price, std::string type) {
-        this->price = price;
-        this->type = type;
-    }
+std::string PriceLevel::getType() const {
+    return type;
+}
 
-    BasicOrder* simple_list() {
-        // todo
-    }
+int PriceLevel::getPrice() const {
+    return price;
+}
 
-    std::string getType() const {
-        return type;
-    }
-
-    int getPrice() const {
-        return price;
-    }
-
-    bool empty() const {
-        if (head == nullptr) {
-            return true;
-        }
-        return false;
-    }
-
-    bool addOrder(int id, int qty) {
-        if (dict.count(id)) return false;
-
-        OrderNode* me = new OrderNode();
-
-        me->id = id;
-        me->qty = qty;
-
-        if (head != nullptr) {
-            me->left = tail;
-            tail->right = me;
-            tail = me;
-        } else {
-            head = tail = me;
-        }
-
-        dict[id] = me;
-        // std::cout << "added " << me->id << ", " << me->qty << std::endl;
-
+bool PriceLevel::empty() const {
+    if (head == nullptr) {
         return true;
     }
+    return false;
+}
 
-    BasicOrder popOrder() {
-        if (head == nullptr) throw std::runtime_error("No orders to pop");
+bool PriceLevel::addOrder(int id, int qty) {
+    if (dict.count(id)) return false;
 
-        OrderNode* el = head;
-        head = head->right;
-        
-        if (head != nullptr) head->left = nullptr;
+    OrderNode* me = new OrderNode();
 
-        BasicOrder retval = BasicOrder(el->id, el->qty);
+    me->id = id;
+    me->qty = qty;
 
-        dict.erase(el->id);
-        delete el;
-
-        return retval;
+    if (head != nullptr) {
+        me->left = tail;
+        tail->right = me;
+        tail = me;
+    } else {
+        head = tail = me;
     }
 
-    BasicOrder peekOrder() {
-        if (head == nullptr) throw std::runtime_error("No orders to peek");
+    dict[id] = me;
+    // std::cout << "added " << me->id << ", " << me->qty << std::endl;
 
-        return BasicOrder(head->id, head->qty);
+    return true;
+}
+
+BasicOrder PriceLevel::popOrder() {
+    if (head == nullptr) throw std::runtime_error("No orders to pop");
+
+    OrderNode* el = head;
+    head = head->right;
+    
+    if (head != nullptr) head->left = nullptr;
+
+    BasicOrder retval = BasicOrder(el->id, el->qty);
+
+    dict.erase(el->id);
+    delete el;
+
+    return retval;
+}
+
+BasicOrder PriceLevel::peekOrder() {
+    if (head == nullptr) throw std::runtime_error("No orders to peek");
+
+    return BasicOrder(head->id, head->qty);
+}
+
+BasicOrder PriceLevel::cancelOrder(int id) {
+    if (!dict.count(id)) throw std::runtime_error("No order to cancel");
+
+    OrderNode* node = dict[id];
+    OrderNode* rnode = node->right;
+    OrderNode* lnode = node->left;
+
+    if (lnode) lnode->right = rnode;
+    if (rnode) rnode->left = lnode;
+    if (head == node) {
+        head = node->right;
+        if (head) head->left = nullptr;
+    }
+    if (tail == node) {
+        tail = node->left;
+        if (tail) tail->left = nullptr;
     }
 
-    BasicOrder cancelOrder(int id) {
-        if (!dict.count(id)) throw std::runtime_error("No order to cancel");
+    BasicOrder retval = BasicOrder(node->id, node->qty);
 
+    delete node;
+
+    return retval;
+
+}
+
+bool PriceLevel::decrementByID(int id, int amt) {
+    if (dict.count(id)) {
         OrderNode* node = dict[id];
-        OrderNode* rnode = node->right;
-        OrderNode* lnode = node->left;
-
-        if (lnode) lnode->right = rnode;
-        if (rnode) rnode->left = lnode;
-        if (head == node) {
-            head = node->right;
-            head->left = nullptr;
-        }
-        if (tail == node) {
-            tail = node->left;
-            tail->left = nullptr;
-        }
-
-        BasicOrder retval = BasicOrder(node->id, node->qty);
-
-        delete node;
-
-        return retval;
-
+        node->qty -= amt;
+        return true;
     }
+    return false;
+}
 
-    bool decrementByID(int id, int amt) {
-        if (dict.count(id)) {
-            OrderNode* node = dict[id];
-            node->qty -= amt;
-            return true;
-        }
-        return false;
-    }
-
-};
-
-int main() {
+/* int main() {
     PriceLevel pl = PriceLevel(100, "test");
 
     pl.addOrder(1, 100);
@@ -162,6 +143,6 @@ int main() {
     std::cout << mine.id << ", " << mine.qty << std::endl;
 
 
-}
+} */
 
 
