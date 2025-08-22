@@ -1,10 +1,4 @@
-# Order Matching Engine (C++)
-
--   working on it (08/21/25s)
-
 # Order Matching Engine (Python Prototype)
-
--   readme copied from `prototype/README.md`
 
 ## Overview
 

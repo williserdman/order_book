@@ -170,7 +170,7 @@ def match_trades_and_return_book(orders):
     """
     ob = OrderBookMatching()
     for order in orders:
-        if order["side"] == "CANCEL":
+        if order["type"] == "CANCEL":
             # cancel this order
             ob.cancel_order(order["cancel_id"])
         else:
