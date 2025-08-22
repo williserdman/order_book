@@ -114,7 +114,6 @@ BasicOrder PriceLevel::cancelOrder(int id) {
     delete node;
 
     return retval;
-
 }
 
 bool PriceLevel::decrementByID(int id, int amt) {
@@ -124,6 +123,16 @@ bool PriceLevel::decrementByID(int id, int amt) {
         return true;
     }
     return false;
+}
+
+PriceLevel::~PriceLevel() {
+    OrderNode* curr = head;
+    OrderNode* next = curr;
+    while (curr) {
+        next = curr->right;
+        delete curr;
+        curr = next;
+    }
 }
 
 /* int main() {

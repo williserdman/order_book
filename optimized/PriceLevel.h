@@ -56,6 +56,8 @@ public:
 
     bool decrementByID(int id, int amt);
 
+    ~PriceLevel();
+
 };
 
 
