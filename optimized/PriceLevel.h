@@ -8,9 +8,12 @@ Version: 1.0
 
 */
 
-
+#include <vector>
+#include <tuple>
 #include <string>
 #include <map>
+
+typedef std::vector<std::tuple<int, int> > PLSimpleList;
 
 struct OrderNode {
     int id;
@@ -38,7 +41,7 @@ private:
 public:
     PriceLevel(float price, std::string type);
 
-    BasicOrder simple_list();
+    PLSimpleList simpleList();
 
     std::string getType() const;
 

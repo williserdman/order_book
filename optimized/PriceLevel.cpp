@@ -27,9 +27,17 @@ PriceLevel::PriceLevel(float price, std::string type) {
     this->type = type;
 }
 
-BasicOrder PriceLevel::simple_list() {
+PLSimpleList PriceLevel::simpleList() {
     // todo
-    return BasicOrder(0, 0);
+    PLSimpleList t;
+    auto curr = head;
+    while (curr) {
+        t.push_back(
+            std::make_tuple(curr->id, curr->qty)
+        );
+        curr = curr->right;
+    }
+    return t;
 }
 
 std::string PriceLevel::getType() const {

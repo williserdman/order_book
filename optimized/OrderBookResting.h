@@ -17,6 +17,7 @@ using namespace std;
 struct PQOrder {
     int price;
     int qty;
+    PQOrder();
     PQOrder(int p, int q);
 };
 
@@ -33,9 +34,11 @@ private:
 
 public:
 
-    bool addOrder(int orderID, string side, int price, int qty); 
-    priority_queue<tuple<int, PriceLevel*> > getBids() const;
-    priority_queue<tuple<int, PriceLevel*> > getAsks() const;
+    bool addOrder(int orderID, string side, float price, int qty); 
+    priority_queue<tuple<int, PriceLevel*> > getBids();
+    void setBids(priority_queue<tuple<int, PriceLevel*> > b);
+    void setAsks(priority_queue<tuple<int, PriceLevel*> > a);
+    priority_queue<tuple<int, PriceLevel*> > getAsks();
     map<int, PriceLevel*> getAMAP() const;
     map<int, PriceLevel*> getBMAP() const;
 

@@ -21,13 +21,13 @@ using namespace std;
         qty = q;
     }
 }; */
-
+PQOrder::PQOrder() {}
 PQOrder::PQOrder(int p, int q) {
     price = p;
     qty = q;
 }
 
-bool OrderBook::addOrder(int orderID, string side, int price, int qty) {
+bool OrderBook::addOrder(int orderID, string side, float price, int qty) {
     if (side == "BUY") {
         if (!bmap.count(price)) {
             bmap[price] = new PriceLevel(price, "BUY");
@@ -54,11 +54,19 @@ bool OrderBook::addOrder(int orderID, string side, int price, int qty) {
     return false;
 }
 
-priority_queue<tuple<int, PriceLevel*> > OrderBook::getBids() const {
+priority_queue<tuple<int, PriceLevel*> > OrderBook::getBids() {
     return bids;
 }
-priority_queue<tuple<int, PriceLevel*> > OrderBook::getAsks() const {
+priority_queue<tuple<int, PriceLevel*> > OrderBook::getAsks() {
     return asks;
+}
+
+void OrderBook::setBids(priority_queue<tuple<int, PriceLevel*> > b) {
+    bids = b;
+}
+
+void OrderBook::setAsks(priority_queue<tuple<int, PriceLevel*> > a) {
+    asks = a;
 }
 map<int, PriceLevel*> OrderBook::getAMAP() const {
     return amap;
@@ -150,7 +158,7 @@ OrderBook::~OrderBook() {
 }
 
 
-int main() {
+/* int main() {
     OrderBook ob = OrderBook();
 
     ob.addOrder(1, "BUY", 100, 10);
@@ -172,5 +180,5 @@ int main() {
     cout << mine.price << ", " << mine.qty << endl;
     mine = ob.bestAsk();
     cout << mine.price << ", " << mine.qty << endl;
-}
+} */
 
