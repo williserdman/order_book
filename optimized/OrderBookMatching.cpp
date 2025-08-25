@@ -19,10 +19,7 @@ std::string OrderBookMatching::printBook() {
 
     for (const auto& pair : x) {
         s += pair.first + "\n";
-        // std::cout << pair.second.size() << std::endl;
         for (int i = 0; i < (int) pair.second.size(); i++) {
-            // std::cout << 1 << std::endl;
-            // std::cout << std::to_string(std::get<0>(pair.second[i])) << std::endl;
             s += std::to_string(std::get<0>(pair.second[i])) + ": ";
             PLSimpleList t = std::get<1>(pair.second[i]);
             for (int j = 0; j < (int) t.size(); j++) {
@@ -39,18 +36,16 @@ std::string OrderBookMatching::printBook() {
             }
         }
     }
-    // std::cout << s << std::endl;
     return s;
 }
 InnerBookPrintList OrderBookMatching::getPrintAsks() {
     InnerBookPrintList out;
     priority_queue<tuple<int, PriceLevel*> > nBids;
-    priority_queue<tuple<int, PriceLevel*> > curr = OrderBook::getAsks();
+    priority_queue<tuple<int, PriceLevel*> > curr = OrderBook::getAsksValues();
     while (!curr.empty()) {
         auto el = curr.top();
         curr.pop();
         nBids.push(el);
-        // std::cout << -std::get<0>(el) << std::endl;
 
         out.push_back(
             std::make_tuple(-std::get<0>(el), std::get<1>(el)->simpleList())
@@ -61,7 +56,7 @@ InnerBookPrintList OrderBookMatching::getPrintAsks() {
 InnerBookPrintList OrderBookMatching::getPrintBids() {
     InnerBookPrintList out;
     priority_queue<tuple<int, PriceLevel*> > nBids;
-    priority_queue<tuple<int, PriceLevel*> > curr = OrderBook::getBids();
+    priority_queue<tuple<int, PriceLevel*> > curr = OrderBook::getBidsValues();
     while (!curr.empty()) {
         auto el = curr.top();
         curr.pop();
@@ -93,16 +88,15 @@ void OrderBookMatching::addOrder(int orderID, std::string side, float price, int
                 float p;
                 int q;
                 int i;
-
                 if (m.qty <= qty) {
-                    auto [p, q, i] = OrderBookMatching::popAsks();
+                    std::tie(p, q, i) = OrderBookMatching::popAsks();
                     try {
                         m = OrderBook::bestAsk();
                     } catch (const std::exception&) {
                         accepts = false;
                     }
                 } else {
-                    auto [p, q, i] = OrderBookMatching::partialBuy(qty);
+                    std::tie(p, q, i) = OrderBookMatching::partialBuy(qty);
                 }
                 qty -= q;
             } else {
@@ -110,7 +104,6 @@ void OrderBookMatching::addOrder(int orderID, std::string side, float price, int
             }
         }
         if (qty > 0) {
-            // std::cout << "added" << std::endl;
             if (type != "MARKET") {
                 OrderBook::addOrder(orderID, side, price, qty);
             }
@@ -132,14 +125,14 @@ void OrderBookMatching::addOrder(int orderID, std::string side, float price, int
                 int i;
 
                 if (m.qty <= qty) {
-                    auto [p, q, i] = OrderBookMatching::popBids();
+                    std::tie(p, q, i) = OrderBookMatching::popBids();
                     try {
                         m = OrderBook::bestBid();
                     } catch (const std::exception&) {
                         accepts = false;
                     }
                 } else {
-                    auto [p, q, i] = OrderBookMatching::partialSell(qty);
+                    std::tie(p, q, i) = OrderBookMatching::partialSell(qty);
                 }
                 qty -= q;
             } else {
@@ -147,8 +140,9 @@ void OrderBookMatching::addOrder(int orderID, std::string side, float price, int
             }
         }
         if (qty > 0) {
-            // std::cout << "added" << std::endl;
             if (type != "MARKET") {
+
+                // std::cout << OrderBookMatching::printBook() << std::endl;
                 OrderBook::addOrder(orderID, side, price, qty);
             }
         }
@@ -156,35 +150,38 @@ void OrderBookMatching::addOrder(int orderID, std::string side, float price, int
 }
 
 MMTransaction OrderBookMatching::popAsks() {
-    if (OrderBook::getAsks().empty()) throw std::runtime_error("No asks willing to buy");
+    if (OrderBook::getAsks()->empty()) throw std::runtime_error("No asks willing to buy");
 
-    auto [price, PL] = OrderBook::getAsks().top();
+    auto [price, PL] = OrderBook::getAsks()->top();
     BasicOrder bo = PL->popOrder();
+    //std::cout << "popping ask" << std::endl;
 
     if (PL->empty()) {
-        OrderBook::getAsks().pop();
+        OrderBook::getAsks()->pop();
         delete PL;
+        //std::cout << "del pl" << std::endl;
+        OrderBook::removeFromDicts(price);
     }
 
     return std::make_tuple(-price, bo.qty, bo.id);
 }
 MMTransaction OrderBookMatching::popBids() {
-    if (OrderBook::getBids().empty()) throw std::runtime_error("No bids to sell to");
+    if (OrderBook::getBids()->empty()) throw std::runtime_error("No bids to sell to");
 
-    auto [price, PL] = OrderBook::getBids().top();
+    auto [price, PL] = OrderBook::getBids()->top();
     BasicOrder bo = PL->popOrder();
 
     if (PL->empty()) {
-        OrderBook::getBids().pop();
+        OrderBook::getBids()->pop();
         delete PL;
     }
 
     return std::make_tuple(price, bo.qty, bo.id);
 }
 MMTransaction OrderBookMatching::partialBuy(int amt) {
-    if (OrderBook::getAsks().empty()) throw std::runtime_error("No bids to sell to");
+    if (OrderBook::getAsks()->empty()) throw std::runtime_error("No bids to sell to");
 
-    auto [price, PL] = OrderBook::getAsks().top();
+    auto [price, PL] = OrderBook::getAsks()->top();
     BasicOrder bo = PL->peekOrder();
 
     PL->decrementByID(bo.id, amt);
@@ -192,9 +189,9 @@ MMTransaction OrderBookMatching::partialBuy(int amt) {
     return std::make_tuple(-price, bo.qty, bo.id);
 }
 MMTransaction OrderBookMatching::partialSell(int amt) {
-    if (OrderBook::getBids().empty()) throw std::runtime_error("No bids to sell to");
+    if (OrderBook::getBids()->empty()) throw std::runtime_error("No bids to sell to");
 
-    auto [price, PL] = OrderBook::getBids().top();
+    auto [price, PL] = OrderBook::getBids()->top();
     BasicOrder bo = PL->peekOrder();
 
     PL->decrementByID(bo.id, amt);
@@ -213,17 +210,14 @@ Ledger OrderBookMatching::getLedger() const {
 }
 
 int main() {
-    //std::cout << "entry" << std::endl;
     std::vector<std::tuple<int, int, float, int> > expectedTrades = {
         std::make_tuple(3, 1, 101., 10),
         std::make_tuple(3, 2, 101., 2),
         std::make_tuple(4, 2, 101., 3)
     };
-    //std::cout << "created" << std::endl;
 
     OrderBookMatching ob = OrderBookMatching();
     
-    //std::cout << "obc" << std::endl;
 
     ob.addOrder(1, "SELL", 101, 10, "LIMIT");
     ob.addOrder(2, "SELL", 101, 5, "LIMIT");
@@ -231,9 +225,10 @@ int main() {
     std::cout << ob.printBook() << std::endl;
 
     ob.addOrder(3, "BUY", 102, 12, "LIMIT");
-    ob.addOrder(4, "BUY", 101, 4, "LIMIT");
 
-    //std::cout << "ob ops" << std::endl;
+    std::cout << ob.printBook() << std::endl;
+
+    ob.addOrder(4, "BUY", 101, 4, "LIMIT");
 
     std::cout << ob.printBook() << std::endl;
 }

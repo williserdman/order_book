@@ -13,6 +13,7 @@ private:
     Ledger ledger;
 
 public:
+
     OBPrint getPrintBook();
     std::string printBook();
 

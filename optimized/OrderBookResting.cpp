@@ -29,6 +29,7 @@ PQOrder::PQOrder(int p, int q) {
 
 bool OrderBook::addOrder(int orderID, string side, float price, int qty) {
     if (side == "BUY") {
+        //std::cout << "adding to buy order book" << std::endl;
         if (!bmap.count(price)) {
             bmap[price] = new PriceLevel(price, "BUY");
             bids.push(
@@ -38,8 +39,8 @@ bool OrderBook::addOrder(int orderID, string side, float price, int qty) {
         bmap[price]->addOrder(orderID, qty);
         IDToPL[orderID] = bmap[price];
         return true;
-    } else if (side == "SELL")
-    {
+    } else if (side == "SELL") {
+        // std::cout << "adding to sell book" << std::endl;
         if (!amap.count(price)) {
             amap[price] = new PriceLevel(price, "SELL");
             asks.push(
@@ -54,11 +55,17 @@ bool OrderBook::addOrder(int orderID, string side, float price, int qty) {
     return false;
 }
 
-priority_queue<tuple<int, PriceLevel*> > OrderBook::getBids() {
+priority_queue<tuple<int, PriceLevel*> >* OrderBook::getBids() {
+    return &bids;
+}
+priority_queue<tuple<int, PriceLevel*> > OrderBook::getBidsValues() {
     return bids;
 }
-priority_queue<tuple<int, PriceLevel*> > OrderBook::getAsks() {
+priority_queue<tuple<int, PriceLevel*> > OrderBook::getAsksValues() {
     return asks;
+}
+priority_queue<tuple<int, PriceLevel*> >* OrderBook::getAsks() {
+    return &asks;
 }
 
 void OrderBook::setBids(priority_queue<tuple<int, PriceLevel*> > b) {
@@ -144,7 +151,14 @@ bool OrderBook::cancelOrder(int id) {
 
 }
 
+void OrderBook::removeFromDicts(float price) {
+    IDToPL.erase(price);
+    amap.erase(price);
+    bmap.erase(price);
+}
+
 OrderBook::~OrderBook() {
+    //std::cout << "this got called" << std::endl;
     while (!bids.empty()) {
         auto [pq_price, pq_pl] = bids.top();
         delete pq_pl;
@@ -155,6 +169,9 @@ OrderBook::~OrderBook() {
         delete pq_pl;   
         asks.pop();
     }
+    bmap.clear();
+    amap.clear();
+    IDToPL.clear();
 }
 
 

@@ -35,12 +35,15 @@ private:
 public:
 
     bool addOrder(int orderID, string side, float price, int qty); 
-    priority_queue<tuple<int, PriceLevel*> > getBids();
+    priority_queue<tuple<int, PriceLevel*> >* getBids();
+    priority_queue<tuple<int, PriceLevel*> > getBidsValues();
+    priority_queue<tuple<int, PriceLevel*> > getAsksValues();
     void setBids(priority_queue<tuple<int, PriceLevel*> > b);
     void setAsks(priority_queue<tuple<int, PriceLevel*> > a);
-    priority_queue<tuple<int, PriceLevel*> > getAsks();
+    priority_queue<tuple<int, PriceLevel*> >* getAsks();
     map<int, PriceLevel*> getAMAP() const;
     map<int, PriceLevel*> getBMAP() const;
+    void removeFromDicts(float price);
 
     PQOrder bestBid();
 

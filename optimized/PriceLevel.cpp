@@ -119,7 +119,8 @@ BasicOrder PriceLevel::cancelOrder(int id) {
 
     BasicOrder retval = BasicOrder(node->id, node->qty);
 
-    delete node;
+    dict.erase(id);
+    //delete node;
 
     return retval;
 }
@@ -138,6 +139,7 @@ PriceLevel::~PriceLevel() {
     OrderNode* next = curr;
     while (curr) {
         next = curr->right;
+        dict.erase(curr->id);
         delete curr;
         curr = next;
     }
