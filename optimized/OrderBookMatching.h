@@ -29,4 +29,5 @@ public:
     void addTransaction(int takerID, int makerID, float price, int qty);
 
     Ledger getLedger() const;
+    std::string printLedger() const;
 };

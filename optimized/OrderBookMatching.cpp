@@ -90,6 +90,7 @@ void OrderBookMatching::addOrder(int orderID, std::string side, float price, int
                 int i;
                 if (m.qty <= qty) {
                     std::tie(p, q, i) = OrderBookMatching::popAsks();
+                    addTransaction(orderID, i, p, q);
                     try {
                         m = OrderBook::bestAsk();
                     } catch (const std::exception&) {
@@ -97,6 +98,7 @@ void OrderBookMatching::addOrder(int orderID, std::string side, float price, int
                     }
                 } else {
                     std::tie(p, q, i) = OrderBookMatching::partialBuy(qty);
+                    addTransaction(orderID, i, p, q);
                 }
                 qty -= q;
             } else {
@@ -126,6 +128,7 @@ void OrderBookMatching::addOrder(int orderID, std::string side, float price, int
 
                 if (m.qty <= qty) {
                     std::tie(p, q, i) = OrderBookMatching::popBids();
+                    addTransaction(orderID, i, p, q);
                     try {
                         m = OrderBook::bestBid();
                     } catch (const std::exception&) {
@@ -133,6 +136,7 @@ void OrderBookMatching::addOrder(int orderID, std::string side, float price, int
                     }
                 } else {
                     std::tie(p, q, i) = OrderBookMatching::partialSell(qty);
+                    addTransaction(orderID, i, p, q);
                 }
                 qty -= q;
             } else {
@@ -202,14 +206,26 @@ MMTransaction OrderBookMatching::partialSell(int amt) {
 
 
 void OrderBookMatching::addTransaction(int takerID, int makerID, float price, int qty) {
-    getLedger().push_back(std::make_tuple(takerID, makerID, price, qty));
+    ledger.push_back(std::make_tuple(takerID, makerID, price, qty));
 }
 
 Ledger OrderBookMatching::getLedger() const {
     return ledger;
 }
 
-int main() {
+std::string OrderBookMatching::printLedger() const {
+    std::string build = "";
+    for (int i = 0; i < ledger.size(); i++) {
+        std::tuple<int, int, float, int> order = ledger[i];
+        build += std::to_string(std::get<0>(order)) + " ";
+        build += std::to_string(std::get<1>(order)) + " ";
+        build += std::to_string(std::get<2>(order)) + " ";
+        build += std::to_string(std::get<3>(order)) + "\n";
+    }
+    return build;
+}
+
+/* int main() {
     std::vector<std::tuple<int, int, float, int> > expectedTrades = {
         std::make_tuple(3, 1, 101., 10),
         std::make_tuple(3, 2, 101., 2),
@@ -231,4 +247,4 @@ int main() {
     ob.addOrder(4, "BUY", 101, 4, "LIMIT");
 
     std::cout << ob.printBook() << std::endl;
-}
+} */
