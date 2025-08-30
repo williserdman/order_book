@@ -190,7 +190,7 @@ MMTransaction OrderBookMatching::partialBuy(int amt) {
 
     PL->decrementByID(bo.id, amt);
 
-    return std::make_tuple(-price, bo.qty, bo.id);
+    return std::make_tuple(-price, amt, bo.id);
 }
 MMTransaction OrderBookMatching::partialSell(int amt) {
     if (OrderBook::getBids()->empty()) throw std::runtime_error("No bids to sell to");
@@ -200,7 +200,7 @@ MMTransaction OrderBookMatching::partialSell(int amt) {
 
     PL->decrementByID(bo.id, amt);
 
-    return std::make_tuple(price, bo.qty, bo.id);
+    return std::make_tuple(price, amt, bo.id);
 }
 
 

@@ -187,6 +187,10 @@ def match_trades_and_return_book(orders):
                 order["id"], order["side"], order["price"], order["qty"], order["type"]
             )
 
+    print(ob.get_print_book())
+    print(ob.get_ledger())
+    print()
+    print()
     return (ob.get_ledger(), ob.get_print_book())
 
 
@@ -300,7 +304,7 @@ def test_cancel_order():
 
 
 if __name__ == "__main__":
-    expected_trades = [
+    """expected_trades = [
         [3, 1, 101, 10],
         [3, 2, 101, 2],
         [4, 2, 101, 3],
@@ -317,9 +321,9 @@ if __name__ == "__main__":
     print(ob.get_print_book())
     print(ob.get_ledger())
     assert ob.get_print_book() == expected_book
-    assert ob.get_ledger() == expected_trades
+    assert ob.get_ledger() == expected_trades"""
 
-    """ # import pytest
+    # import pytest
     print("begin testing")
 
     test_fifo_partial_fill()
@@ -330,4 +334,4 @@ if __name__ == "__main__":
     test_fifo_with_partial_and_new_entry()
     test_cancel_order()
 
-    print("all tests passed") """
+    print("all tests passed")

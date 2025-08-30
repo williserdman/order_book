@@ -131,18 +131,18 @@ bool OrderBook::cancelOrder(int id) {
             bids = newBids;
         } else {
             while (!asks.empty()) {
-                priority_queue<tuple<int, PriceLevel*> > newBids;
-                auto [inv_price, pl] = bids.top();
-                bids.pop();
+                priority_queue<tuple<int, PriceLevel*> > newAsks;
+                auto [inv_price, pl] = asks.top();
+                asks.pop();
                 if (-inv_price != price) {
-                    newBids.push(make_tuple(
+                    newAsks.push(make_tuple(
                         inv_price, pl
                     ));
                 } else {
-                    bmap.erase(price);
+                    amap.erase(price);
                     delete pl;
                 }
-                bids = newBids;
+                bids = newAsks;
             }
         }
         return true;
