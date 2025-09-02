@@ -3,7 +3,7 @@
 #include <cmath>
 
 typedef std::vector<std::tuple<float, PLSimpleList > > InnerBookPrintList;
-typedef std::map<std::string, InnerBookPrintList> OBPrint;
+typedef std::unordered_map<std::string, InnerBookPrintList> OBPrint;
 typedef std::vector<std::tuple<int, int, float, int> > Ledger;
 
 typedef std::tuple<float, int, int> MMTransaction;

@@ -11,7 +11,7 @@ Version: 1.0
 #include <vector>
 #include <tuple>
 #include <string>
-#include <map>
+#include <unordered_map>
 
 typedef std::vector<std::tuple<int, int> > PLSimpleList;
 
@@ -34,7 +34,7 @@ class PriceLevel {
 private:
     OrderNode* head = nullptr;
     OrderNode* tail = nullptr;
-    std::map<int, OrderNode*> dict;
+    std::unordered_map<int, OrderNode*> dict;
     float price;
     std::string type;
 

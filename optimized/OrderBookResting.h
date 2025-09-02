@@ -27,10 +27,10 @@ private:
     priority_queue<std::tuple<int, PriceLevel*> > bids;
     priority_queue<std::tuple<int, PriceLevel*> > asks;
 
-    map<int, PriceLevel*> bmap;
-    map<int, PriceLevel*> amap;
+    std::unordered_map<int, PriceLevel*> bmap;
+    std::unordered_map<int, PriceLevel*> amap;
 
-    map<int, PriceLevel*> IDToPL;
+    std::unordered_map<int, PriceLevel*> IDToPL;
 
 public:
 
@@ -41,9 +41,11 @@ public:
     void setBids(priority_queue<tuple<int, PriceLevel*> > b);
     void setAsks(priority_queue<tuple<int, PriceLevel*> > a);
     priority_queue<tuple<int, PriceLevel*> >* getAsks();
-    map<int, PriceLevel*> getAMAP() const;
-    map<int, PriceLevel*> getBMAP() const;
-    void removeFromDicts(float price);
+    std::unordered_map<int, PriceLevel*> getAMAP() const;
+    std::unordered_map<int, PriceLevel*> getBMAP() const;
+    void removeFromAMAP(float price);
+    void removeFromBMAP(float price);
+    void idFullySold(int id);
 
     PQOrder bestBid();
 

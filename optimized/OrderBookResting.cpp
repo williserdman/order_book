@@ -28,27 +28,54 @@ PQOrder::PQOrder(int p, int q) {
 }
 
 bool OrderBook::addOrder(int orderID, string side, float price, int qty) {
+    // std::cout << "adding order" << std::endl;
+    //std::cout << "adding order: " << orderID << " price: " << price << " qty: " << qty << " side: " << side << std::endl;
     if (side == "BUY") {
+        //std::cerr << orderID << " added to " << " buy side " << std::endl;
         //std::cout << "adding to buy order book" << std::endl;
-        if (!bmap.count(price)) {
-            bmap[price] = new PriceLevel(price, "BUY");
-            bids.push(
+        if (bmap.find(price) == bmap.end()) {
+            //std::cout << "creating new" << std::endl;
+            bmap.emplace(price, new PriceLevel(price, "BUY"));
+            //std::cout << " price level just added: " << bmap[price]->getPrice() << std::endl;
+
+            auto lvl_before = bmap[price];
+            //std::cout << "addr before push: " << static_cast<void*>(lvl_before) << " price before: " << lvl_before->getPrice() << std::endl;
+
+            bids.push(std::make_tuple(price, lvl_before));
+
+            auto lvl_after = bmap[price];
+            //std::cout << "addr after push: " << static_cast<void*>(lvl_after) << " price after: " << (lvl_after ? lvl_after->getPrice() : -1) << std::endl;
+            /*             bids.push(
                 make_tuple(price, bmap[price])
-            );
+            ); */
         }
+        //std::cout << "special adding to " << bmap[price]->getPrice() << std::endl;
         bmap[price]->addOrder(orderID, qty);
-        IDToPL[orderID] = bmap[price];
+        IDToPL.emplace(orderID, bmap[price]);
         return true;
     } else if (side == "SELL") {
+        //std::cerr << orderID << " added to " << " sell side " << std::endl;
         // std::cout << "adding to sell book" << std::endl;
-        if (!amap.count(price)) {
-            amap[price] = new PriceLevel(price, "SELL");
+        if (amap.find(price) == amap.end()) {
+            //std::cout << " creating new " << std::endl;
+            amap.emplace(price, new PriceLevel(price, "SELL"));
+            //std::cout << " price level just added: " << amap[price]->getPrice() << std::endl;
+
+            auto lvl_before = amap[price];
+            //std::cout << "addr before push: " << static_cast<void*>(lvl_before) << " price before: " << lvl_before->getPrice() << std::endl;
+
+            //bids.push(std::make_tuple(price, lvl_before));
             asks.push(
-                make_tuple(-price, amap[price])
+                std::make_tuple(-price, amap[price])
             );
+
+            auto lvl_after = amap[price];
+            //std::cout << "addr after push: " << static_cast<void*>(lvl_after) << " price after: " << (lvl_after ? lvl_after->getPrice() : -1) << std::endl;
+            
         }
+        //std::cout << "special adding to " << amap[price]->getPrice() << std::endl;
         amap[price]->addOrder(orderID, qty);
-        IDToPL[orderID] = amap[price];
+        IDToPL.emplace(orderID, amap[price]);
         return true;
     }
 
@@ -75,10 +102,10 @@ void OrderBook::setBids(priority_queue<tuple<int, PriceLevel*> > b) {
 void OrderBook::setAsks(priority_queue<tuple<int, PriceLevel*> > a) {
     asks = a;
 }
-map<int, PriceLevel*> OrderBook::getAMAP() const {
+std::unordered_map<int, PriceLevel*> OrderBook::getAMAP() const {
     return amap;
 }
-map<int, PriceLevel*> OrderBook::getBMAP() const {
+std::unordered_map<int, PriceLevel*> OrderBook::getBMAP() const {
     return bmap;
 }
 
@@ -102,18 +129,18 @@ PQOrder OrderBook::bestAsk() {
     return PQOrder(-std::get<0>(x), bo.qty);
 }
 
+bool areFloatsEqual(float a, float b, float epsilon = std::numeric_limits<float>::epsilon()) {
+    return std::fabs(a - b) <= epsilon;
+}
+
 bool OrderBook::cancelOrder(int id) {
     if (!IDToPL.count(id)) throw runtime_error("Cancel order invalid");
-
+    //std::cout << "cancelling " << id << " from OBR" << std::endl;
     PriceLevel* pl = IDToPL[id];
     pl->cancelOrder(id);
     IDToPL.erase(id);
 
-
-    try {
-        pl->peekOrder();
-    }
-    catch(const exception& e) {
+    if (pl->empty()) {
         int price = pl->getPrice();
         string type = pl->getType();
         if (type == "BUY") {
@@ -121,20 +148,21 @@ bool OrderBook::cancelOrder(int id) {
             while (!bids.empty()) {
                 auto [pq_price, pq_pl] = bids.top();
                 bids.pop();
-                if (pq_price != price) {
+                if (!areFloatsEqual(pq_price, price)) {
                     newBids.push(make_tuple(pq_price, pq_pl));
                 } else {
                     bmap.erase(price);
                     delete pq_pl;
                 }
             }
+            
             bids = newBids;
         } else {
+            priority_queue<tuple<int, PriceLevel*> > newAsks;
             while (!asks.empty()) {
-                priority_queue<tuple<int, PriceLevel*> > newAsks;
                 auto [inv_price, pl] = asks.top();
                 asks.pop();
-                if (-inv_price != price) {
+                if (!areFloatsEqual(-inv_price, price)) {
                     newAsks.push(make_tuple(
                         inv_price, pl
                     ));
@@ -142,8 +170,8 @@ bool OrderBook::cancelOrder(int id) {
                     amap.erase(price);
                     delete pl;
                 }
-                bids = newAsks;
             }
+            asks = newAsks;
         }
         return true;
     }
@@ -151,10 +179,18 @@ bool OrderBook::cancelOrder(int id) {
 
 }
 
-void OrderBook::removeFromDicts(float price) {
-    IDToPL.erase(price);
-    amap.erase(price);
+void OrderBook::removeFromBMAP(float price) {
+    //std::cout << "erasing " << price << std::endl;
     bmap.erase(price);
+    // erase the price level pointer that's in bmap 
+}
+
+void OrderBook::removeFromAMAP(float price) {
+    amap.erase(price);
+}
+
+void OrderBook::idFullySold(int id) {
+    IDToPL.erase(id);
 }
 
 OrderBook::~OrderBook() {

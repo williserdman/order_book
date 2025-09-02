@@ -40,23 +40,24 @@ std::string OrderBookMatching::printBook() {
 }
 InnerBookPrintList OrderBookMatching::getPrintAsks() {
     InnerBookPrintList out;
-    priority_queue<tuple<int, PriceLevel*> > nBids;
-    priority_queue<tuple<int, PriceLevel*> > curr = OrderBook::getAsksValues();
+    priority_queue<tuple<int, PriceLevel*> > nAsks;
+    priority_queue<tuple<int, PriceLevel*> > curr = *OrderBook::getAsks();
     while (!curr.empty()) {
         auto el = curr.top();
         curr.pop();
-        nBids.push(el);
+        nAsks.push(el);
 
         out.push_back(
             std::make_tuple(-std::get<0>(el), std::get<1>(el)->simpleList())
         );
     }
+    OrderBook::setAsks(nAsks);
     return out;
 }
 InnerBookPrintList OrderBookMatching::getPrintBids() {
     InnerBookPrintList out;
     priority_queue<tuple<int, PriceLevel*> > nBids;
-    priority_queue<tuple<int, PriceLevel*> > curr = OrderBook::getBidsValues();
+    priority_queue<tuple<int, PriceLevel*> > curr = *OrderBook::getBids();
     while (!curr.empty()) {
         auto el = curr.top();
         curr.pop();
@@ -66,6 +67,7 @@ InnerBookPrintList OrderBookMatching::getPrintBids() {
             std::make_tuple(std::get<0>(el), std::get<1>(el)->simpleList())
         );
     }
+    OrderBook::setBids(nBids);
     return out;
 }
 
@@ -90,6 +92,7 @@ void OrderBookMatching::addOrder(int orderID, std::string side, float price, int
                 int i;
                 if (m.qty <= qty) {
                     std::tie(p, q, i) = OrderBookMatching::popAsks();
+                    OrderBook::idFullySold(i);
                     addTransaction(orderID, i, p, q);
                     try {
                         m = OrderBook::bestAsk();
@@ -121,13 +124,14 @@ void OrderBookMatching::addOrder(int orderID, std::string side, float price, int
         }
 
         while (qty > 0 && accepts) {
-            if (m.price >= price) {
+            if (m.price >= price) { // if maker is offering more or equal to what we are asking
                 float p;
                 int q;
                 int i;
 
-                if (m.qty <= qty) {
+                if (m.qty <= qty) { // if maker is offering fewer or equal shares we take them all
                     std::tie(p, q, i) = OrderBookMatching::popBids();
+                    OrderBook::idFullySold(i);
                     addTransaction(orderID, i, p, q);
                     try {
                         m = OrderBook::bestBid();
@@ -164,7 +168,7 @@ MMTransaction OrderBookMatching::popAsks() {
         OrderBook::getAsks()->pop();
         delete PL;
         //std::cout << "del pl" << std::endl;
-        OrderBook::removeFromDicts(price);
+        OrderBook::removeFromAMAP(-price);
     }
 
     return std::make_tuple(-price, bo.qty, bo.id);
@@ -178,6 +182,8 @@ MMTransaction OrderBookMatching::popBids() {
     if (PL->empty()) {
         OrderBook::getBids()->pop();
         delete PL;
+
+        OrderBook::removeFromBMAP(price);
     }
 
     return std::make_tuple(price, bo.qty, bo.id);

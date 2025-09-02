@@ -4,6 +4,13 @@
 #include <list>
 #include <iostream>
 
+const int ID_START_VAL = 10;
+const int PROB_LIMIT = 50;
+const int PROB_MARKET = 30;
+const int PROB_CANCEL = 20;
+const int MAX_PRICE = 200;
+const int MAX_QTY = 50;
+
 struct Order
 {
     int id;
@@ -12,6 +19,8 @@ struct Order
     int qty;
     std::string type;
     int cancel_id;
+    bool alive;
+    Order() {}
     Order(int id, std::string side, float price, std::string type, int qty, int cancel_id) {
         this->id = id;
         this->side = side;
@@ -19,6 +28,7 @@ struct Order
         this->price = price;
         this->qty = qty;
         this->cancel_id = cancel_id;
+        alive = true;
     }
 };
 
@@ -41,7 +51,11 @@ BookFreeze matchTradesAndReturnBook(std::vector<Order> orders) {
     for (int i=0; i < orders.size(); i++) {
         Order o = orders[i];
         if (o.type == "CANCEL") {
-            ob.cancelOrder(o.cancel_id);
+            try {
+                ob.cancelOrder(o.cancel_id);
+            } catch (const exception& e) {
+                std::cout << e.what() << std::endl;
+            }
         } else {
             ob.addOrder(o.id, o.side, o.price, o.qty, o.type);
         }
@@ -54,7 +68,12 @@ void matchTradesAndPrintBook(std::list<Order> orders) {
     OrderBookMatching ob = OrderBookMatching();
     for (Order o : orders) {
         if (o.type == "CANCEL") {
-            ob.cancelOrder(o.cancel_id);
+            // std::cout << o.cancel_id << std::endl;
+            try {
+                ob.cancelOrder(o.cancel_id);
+            } catch (const exception& e) {
+                std::cout << e.what() << std::endl;
+            }
         } else {
             ob.addOrder(o.id, o.side, o.price, o.qty, o.type);
         }
@@ -62,6 +81,34 @@ void matchTradesAndPrintBook(std::list<Order> orders) {
 
     std::cout << ob.printBook() << std::endl;
     std::cout << ob.printLedger() << std::endl;
+}
+
+std::list<int> seenThings;
+
+void matchTradesToBook(std::list<Order>* orders, OrderBookMatching* ob) {
+    for (Order o : *orders) {
+        //std::cout << "ORDER: " << "id: " << o.id << " price: " << o.price << " quantity: " << o.qty << " type: " << o.type << " side " << o.side << " cancel id: " << o.cancel_id << std::endl;
+        //std::cout << "BOOK STATUS: " << ob->printBook() << "\n\n";
+        
+        if (o.type == "CANCEL") {
+            // std::cout << o.cancel_id << std::endl;
+            try {
+                ob->cancelOrder(o.cancel_id);
+                seenThings.push_back(o.cancel_id);
+                //std::cout << "elements" << std::endl;
+                for (auto el : seenThings) {
+                    //std::cout << el << std::endl;
+                }
+            } catch (const exception& e) {
+                //std::cout << e.what() << std::endl;
+            }
+        } else {
+            ob->addOrder(o.id, o.side, o.price, o.qty, o.type);
+            //std::cout << ob->printBook() << std::endl;
+            //std::cout << ob->printLedger() << std::endl;
+        }
+        //std::cout << ob->printBook() << "\n\n";
+    }
 }
 
 void testFIFOPartialFill() {
@@ -173,18 +220,83 @@ void testCancelOrder() {
 }
 
 
-#include <chrono>
-#include <random>
-#include <algorithm>
+
+void benchmarkPerformance(int orderCount) {
+    std::list<Order> orders;
+    int current_order_id = ID_START_VAL;
+    for (int i = 0; i < orderCount; i++) {
+        Order o;
+        int r = rand() % 101; // between 0 and 100
+        int r_helper = rand() % 2;
+        std::string side = (r_helper == 0) ? "BUY" : "SELL";
+        int qty = (((int) rand() % MAX_QTY) + 2);
+
+        if (r < PROB_LIMIT) {
+            int price = (rand() % MAX_PRICE) + 2;
+
+            o = Order(
+                i,
+                side,
+                price,
+                "LIMIT",
+                qty,
+                0
+            );
+        } else if (r < (PROB_LIMIT + PROB_MARKET)) {
+            o = Order(
+                i,
+                side,
+                0,
+                "MARKET",
+                qty,
+                0
+            );
+        } else {
+            if (i > 0) {
+                int cancel_id = rand() % (i-1);
+                o = Order(
+                    i,
+                    "CANCEL",
+                    0,
+                    "CANCEL",
+                    0,
+                    cancel_id
+                );
+            }
+        }
+        if (o.alive) {
+            orders.push_back(o);
+            std::cout << o.id << " " << o.type << " " << o.side << " " << o.price << " " << o.qty << " " << o.cancel_id << std::endl;
+        }
+    }
+
+    OrderBookMatching ob = OrderBookMatching();
+    std::cout << "\n\n" << "starting run" << "\n\n";
+    auto start = std::chrono::high_resolution_clock::now();
+
+    matchTradesToBook(&orders, &ob);
+
+    auto end = std::chrono::high_resolution_clock::now();
+
+    std::cout << ob.printBook() << std::endl;
+    std::cout << ob.printLedger() << std::endl;
+
+    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end-start);
+    std::cerr << "Processed " << orderCount << " orders in " << duration.count() << " nanoseconds. This is an average time of " << duration.count() / orderCount << " nanoseconds per order." << std::endl;
+}
     
 
 int main() {
     std::cout << "running" << std::endl;
-    testFIFOPartialFill();
+    /* testFIFOPartialFill();
     testMarketBuyAgainstSingleAsk();
     testMarketOrderExhaustBook();
     testLimitOrderRestWhenNoLiquidity();
     testMultiplePriceLevels();
     testFIFOWithPartialAndNewEntry();
-    testCancelOrder();
+    testCancelOrder(); */
+
+    benchmarkPerformance(100); // one million orders
 }
+
+
