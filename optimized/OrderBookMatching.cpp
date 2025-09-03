@@ -4,6 +4,8 @@
 #include <iostream>
 
 
+
+
 OBPrint OrderBookMatching::getPrintBook() {
     OBPrint myMap;
     myMap["bids"] = getPrintBids();
@@ -149,7 +151,6 @@ void OrderBookMatching::addOrder(int orderID, std::string side, float price, int
         }
         if (qty > 0) {
             if (type != "MARKET") {
-
                 // std::cout << OrderBookMatching::printBook() << std::endl;
                 OrderBook::addOrder(orderID, side, price, qty);
             }

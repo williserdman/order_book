@@ -94,11 +94,11 @@ void matchTradesToBook(std::list<Order>* orders, OrderBookMatching* ob) {
             // std::cout << o.cancel_id << std::endl;
             try {
                 ob->cancelOrder(o.cancel_id);
-                seenThings.push_back(o.cancel_id);
+                /* seenThings.push_back(o.cancel_id);
                 //std::cout << "elements" << std::endl;
                 for (auto el : seenThings) {
                     //std::cout << el << std::endl;
-                }
+                } */
             } catch (const exception& e) {
                 //std::cout << e.what() << std::endl;
             }
@@ -266,7 +266,7 @@ void benchmarkPerformance(int orderCount) {
         }
         if (o.alive) {
             orders.push_back(o);
-            std::cout << o.id << " " << o.type << " " << o.side << " " << o.price << " " << o.qty << " " << o.cancel_id << std::endl;
+            // std::cout << o.id << " " << o.type << " " << o.side << " " << o.price << " " << o.qty << " " << o.cancel_id << std::endl;
         }
     }
 
@@ -278,8 +278,8 @@ void benchmarkPerformance(int orderCount) {
 
     auto end = std::chrono::high_resolution_clock::now();
 
-    std::cout << ob.printBook() << std::endl;
-    std::cout << ob.printLedger() << std::endl;
+    //std::cout << ob.printBook() << std::endl;
+    //std::cout << ob.printLedger() << std::endl;
 
     auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end-start);
     std::cerr << "Processed " << orderCount << " orders in " << duration.count() << " nanoseconds. This is an average time of " << duration.count() / orderCount << " nanoseconds per order." << std::endl;
@@ -296,7 +296,7 @@ int main() {
     testFIFOWithPartialAndNewEntry();
     testCancelOrder(); */
 
-    benchmarkPerformance(100); // one million orders
+    benchmarkPerformance(1000000); // one million orders
 }
 
 

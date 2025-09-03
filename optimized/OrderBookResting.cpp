@@ -11,6 +11,10 @@ Version: 1.0
 #include "OrderBookResting.h"
 #include <iostream>
 
+// DEV STUFF
+using Clock = std::chrono::steady_clock;
+using ns = std::chrono::nanoseconds;
+
 using namespace std;
 
 /* struct PQOrder {
@@ -30,9 +34,13 @@ PQOrder::PQOrder(int p, int q) {
 bool OrderBook::addOrder(int orderID, string side, float price, int qty) {
     // std::cout << "adding order" << std::endl;
     //std::cout << "adding order: " << orderID << " price: " << price << " qty: " << qty << " side: " << side << std::endl;
+    auto t0 = Clock::now();
+    auto t1 = Clock::now();
+    auto t2 = Clock::now();
     if (side == "BUY") {
         //std::cerr << orderID << " added to " << " buy side " << std::endl;
         //std::cout << "adding to buy order book" << std::endl;
+        t0 = Clock::now();
         if (bmap.find(price) == bmap.end()) {
             //std::cout << "creating new" << std::endl;
             bmap.emplace(price, new PriceLevel(price, "BUY"));
@@ -49,13 +57,17 @@ bool OrderBook::addOrder(int orderID, string side, float price, int qty) {
                 make_tuple(price, bmap[price])
             ); */
         }
+        t1 = Clock::now();
         //std::cout << "special adding to " << bmap[price]->getPrice() << std::endl;
         bmap[price]->addOrder(orderID, qty);
+        t2 = Clock::now();
         IDToPL.emplace(orderID, bmap[price]);
+        std::cout << "possible malloc operations: " << std::chrono::duration_cast<ns>(t1 - t0).count() << " other reqs " << std::chrono::duration_cast<ns>(t2 - t1).count() << std::endl;
         return true;
     } else if (side == "SELL") {
         //std::cerr << orderID << " added to " << " sell side " << std::endl;
         // std::cout << "adding to sell book" << std::endl;
+        t0 = Clock::now();
         if (amap.find(price) == amap.end()) {
             //std::cout << " creating new " << std::endl;
             amap.emplace(price, new PriceLevel(price, "SELL"));
@@ -73,9 +85,12 @@ bool OrderBook::addOrder(int orderID, string side, float price, int qty) {
             //std::cout << "addr after push: " << static_cast<void*>(lvl_after) << " price after: " << (lvl_after ? lvl_after->getPrice() : -1) << std::endl;
             
         }
+        t1 = Clock::now();
         //std::cout << "special adding to " << amap[price]->getPrice() << std::endl;
         amap[price]->addOrder(orderID, qty);
+        t2 = Clock::now();
         IDToPL.emplace(orderID, amap[price]);
+        std::cout << "possible malloc operations: " << std::chrono::duration_cast<ns>(t1 - t0).count() << " other reqs " << std::chrono::duration_cast<ns>(t2 - t1).count() << std::endl;
         return true;
     }
 

@@ -31,6 +31,7 @@ def processOrders(orders):
                 order["id"], order["side"], order["price"], order["qty"], order["type"]
             )
 
+    print(ob.get_print_book())
     return ob.get_ledger()
 
 
@@ -52,7 +53,7 @@ PROB_CANCEL = 0.2
 def benchmark_performance(n_orders: int = 100_000):
     orders = []
     current_order_id = ORDER_ID_START
-    for _ in range(NUM_ORDERS):
+    for _ in range(n_orders):
         r = random.random()
 
         if r < PROB_LIMIT:
@@ -96,28 +97,15 @@ def benchmark_performance(n_orders: int = 100_000):
     trades = []
     start = time.perf_counter()
 
-    for msg in orders:
-        t0 = time.perf_counter()
-        trades.extend(processOrders([msg]))
-        t1 = time.perf_counter()
-        latencies.append((t1 - t0) * 1e6)  # microseconds
+    s1 = time.time_ns()
+    processOrders(orders)
+    e1 = time.time_ns()
 
-    end = time.perf_counter()
-    total_time = end - start
-    throughput = n_orders / total_time
-
-    # Compute latency stats
-    latencies.sort()
-
-    def pct(p):
-        return latencies[int(len(latencies) * p)]
-
-    print(f"Processed {n_orders} messages in {total_time:.4f} sec")
-    print(f"Throughput: {throughput:.2f} msgs/sec")
-    print(f"Latency p50: {pct(0.50):.2f} µs")
-    print(f"Latency p99: {pct(0.99):.2f} µs")
-    print(f"Latency p99.9: {pct(0.999):.2f} µs")
+    duration = e1 - s1
+    print(
+        f"Processed {n_orders} orders in {duration} nanoseconds, which is an average of {duration/n_orders} ns."
+    )
 
 
 if __name__ == "__main__":
-    benchmark_performance(1_000_000_000)
+    benchmark_performance(1_000_000)
