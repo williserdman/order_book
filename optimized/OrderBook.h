@@ -13,8 +13,6 @@ struct Order {
 
     Order();
     bool operator < (const Order& other) const;
-    int getPrice() const;
-    int getCreationTime() const;
 };
 
 class OrderPool {
@@ -36,13 +34,21 @@ struct Transaction {
     int price;
     int quantity;
     int time;
+
+    Transaction(int mid, int tid, int p, int q, int t);
+};
+
+struct ComparePointerOrders {
+    bool operator () (const Order* a, const Order* b) const {
+        return *a < *b;
+    }
 };
 
 
 class OrderBook {
     private:
-        std::priority_queue<Order> bids;
-        std::priority_queue<Order> asks;
+        std::priority_queue<Order*, std::vector<Order*>, ComparePointerOrders> bids;
+        std::priority_queue<Order*, std::vector<Order*>, ComparePointerOrders> asks;
 
         std::vector<Transaction> ledger;
 
@@ -51,12 +57,15 @@ class OrderBook {
         OrderPool pool;
 
         long time = 0;
+
+        bool addRestingAsk(int id, int price, int quantity, std::string& type, std::string& side);
+        bool addRestingBid(int id, int price, int quantity, std::string& type, std::string& side);
         
         bool popBids();
         bool popAsks();
 
-        bool partialBuy();
-        bool partialSell();
+        bool partialBuy(int amt);
+        bool partialSell(int amt);
 
         bool addToLedger(Transaction &t);
 
@@ -68,11 +77,11 @@ class OrderBook {
     public:
         OrderBook(int poolSize);
 
-        bool addOrder(int& id, int& price, int& quantity, std::string& type, std::string& side);
-        bool cancelOrder(int& id);
+        bool addOrder(int id, int price, int quantity, std::string& type, std::string& side);
+        bool cancelOrder(int id);
         
-        Order topBids() const;
-        Order topAsks() const;
+        bool topBids(Order*& best);
+        bool topAsks(Order*& best);
 
         std::string getBook() const;
         std::string getLedger() const;
